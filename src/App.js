@@ -15,10 +15,10 @@ class App extends Component {
     super();
 
     this.clientId =
-      "826265862385-p41e559ccssujlfsf49ppmo0gktkf6co.apps.googleusercontent.com";
+      "624739709049-hsbpgrimevikffkbaeeclqneflib7b7o.apps.googleusercontent.com";
     this.spreadsheetId =
       process.env.REACT_APP_SHEET_ID ||
-      "1eYrQf0xhs2mTSWEzQRfSM-MD-tCcx1r0NVEacLg3Jrc";
+      "199goDfe-uggNp1LfZpIQc48t4uLu04nFvQzLgPWjPM4";
 
     this.state = {
       signedIn: undefined,
@@ -43,7 +43,9 @@ class App extends Component {
           ],
           clientId: this.clientId,
           scope:
-            "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.metadata.readonly"
+            "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.metadata.readonly",
+          plugin_name:
+            "shark-expenses-web"
         })
         .then(() => {
           window.gapi.auth2
@@ -52,7 +54,8 @@ class App extends Component {
           this.signedInChanged(
             window.gapi.auth2.getAuthInstance().isSignedIn.get()
           );
-        });
+        })
+        .catch(err => console.error('Error initializing Google API client:', err));
     });
     document.addEventListener("keyup", this.onKeyPressed.bind(this));
   }
@@ -231,6 +234,7 @@ class App extends Component {
           categories: categories,
           expenses: (response.result.valueRanges[2].values || [])
             .map(this.parseExpense)
+            .sort((e1, e2) => (new Date(e1.date) - new Date(e2.date)))
             .reverse()
             .slice(0, 30),
           processing: false,
