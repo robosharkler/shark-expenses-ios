@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { ExpenseList, ExpenseForm, LoadingBar } from "./components/index";
 import { MDCSnackbar } from "@material/snackbar/dist/mdc.snackbar.js";
+import { parseExpense, append, update } from './components/expenses';
 
 import "@material/fab/dist/mdc.fab.css";
 import "@material/button/dist/mdc.button.css";
@@ -133,10 +134,8 @@ class App extends Component {
 
   handleExpenseSubmit = () => {
     this.setState({ processing: true, showExpenseForm: false });
-    const submitAction = (this.state.expense.id
-      ? this.update
-      : this.append).bind(this);
-    submitAction(this.state.expense).then(
+    const submitAction = (this.state.expense.id ? update : append).bind(this);
+    submitAction(this.state.expense, this.spreadsheetId).then(
       response => {
         this.snackbar.show({
           message: `Expense ${this.state.expense.id ? "updated" : "added"}!`
@@ -217,49 +216,6 @@ class App extends Component {
     });
   }
 
-  parseExpense(value, index) {
-    return {
-      id: `Expenses!A${index + 2}`,
-      date: value[0],
-      description: value[1],
-      category: value[3],
-      amount: value[4].replace(",", ""),
-      account: value[2]
-    };
-  }
-
-  formatExpense(expense) {
-    return [
-      `=DATE(${expense.date.substr(0, 4)}, ${expense.date.substr(
-        5,
-        2
-      )}, ${expense.date.substr(-2)})`,
-      expense.description,
-      expense.account,
-      expense.category,
-      expense.amount
-    ];
-  }
-
-  append(expense) {
-    return window.gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId: this.spreadsheetId,
-      range: "Expenses!A1",
-      valueInputOption: "USER_ENTERED",
-      insertDataOption: "INSERT_ROWS",
-      values: [this.formatExpense(expense)]
-    });
-  }
-
-  update(expense) {
-    return window.gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: this.spreadsheetId,
-      range: expense.id,
-      valueInputOption: "USER_ENTERED",
-      values: [this.formatExpense(expense)]
-    });
-  }
-
   load() {
     window.gapi.client.sheets.spreadsheets.values
       .batchGet({
@@ -283,7 +239,7 @@ class App extends Component {
           accounts: accounts,
           categories: categories,
           expenses: (response.result.valueRanges[2].values || [])
-            .map(this.parseExpense)
+            .map(parseExpense)
             .sort((e1, e2) => (new Date(e1.date) - new Date(e2.date)))
             .reverse()
             .slice(0, 30),
