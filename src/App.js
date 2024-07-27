@@ -13,7 +13,7 @@ import "./App.css";
 
 class App extends Component {
 
-  // =================== Default react component methods ===================
+  // =================== Initialization ===================
 
   constructor() {
     super();
@@ -42,6 +42,8 @@ class App extends Component {
     this.loadGisClient();
     document.addEventListener("keyup", this.onKeyPressed.bind(this));
   }
+
+  // =================== Rendering ===================
 
   render() {
     return (
@@ -114,6 +116,58 @@ class App extends Component {
           </div>
         </div>
     );
+  }
+
+  renderBody() {
+    if (this.state.processing) return <LoadingBar/>;
+    else
+      return (
+          <div className="content">
+            {this.renderExpenses()}
+          </div>
+      );
+  }
+
+  renderExpenses() {
+    if (this.state.showExpenseForm)
+      return (
+          <ExpenseForm
+              categories={this.state.categories}
+              accounts={this.state.accounts}
+              expense={this.state.expense}
+              onSubmit={this.handleExpenseSubmit}
+              onCancel={this.handleExpenseCancel}
+              onDelete={this.handleExpenseDelete}
+              onChange={this.handleExpenseChange}
+          />
+      );
+    else
+      return (
+          <div>
+            <div className="mdc-card">
+              <section className="mdc-card__primary">
+                <h2 className="mdc-card__subtitle">This month you've spent:</h2>
+                <h1 className="mdc-card__title mdc-card__title--large center">
+                  {this.state.currentMonth}
+                </h1>
+              </section>
+              <section className="mdc-card__supporting-text">
+                Previous month: {this.state.previousMonth}
+              </section>
+            </div>
+            <ExpenseList
+                expenses={this.state.expenses}
+                onSelect={this.handleExpenseSelect}
+            />
+            <button
+                onClick={() => this.onExpenseNew()}
+                className="mdc-fab app-fab--absolute material-icons"
+                aria-label="Add expense"
+            >
+              <span className="mdc-fab__icon">add</span>
+            </button>
+          </div>
+      );
   }
 
   // =================== Business logic ===================
@@ -249,60 +303,6 @@ class App extends Component {
         });
       });
   }
-
-
-
-  renderBody() {
-    if (this.state.processing) return <LoadingBar/>;
-    else
-      return (
-          <div className="content">
-            {this.renderExpenses()}
-          </div>
-      );
-  }
-
-  renderExpenses() {
-    if (this.state.showExpenseForm)
-      return (
-          <ExpenseForm
-              categories={this.state.categories}
-              accounts={this.state.accounts}
-              expense={this.state.expense}
-              onSubmit={this.handleExpenseSubmit}
-              onCancel={this.handleExpenseCancel}
-              onDelete={this.handleExpenseDelete}
-              onChange={this.handleExpenseChange}
-          />
-      );
-    else
-      return (
-          <div>
-            <div className="mdc-card">
-              <section className="mdc-card__primary">
-                <h2 className="mdc-card__subtitle">This month you've spent:</h2>
-                <h1 className="mdc-card__title mdc-card__title--large center">
-                  {this.state.currentMonth}
-                </h1>
-              </section>
-              <section className="mdc-card__supporting-text">
-            Previous month: {this.state.previousMonth}
-          </section>
-        </div>
-        <ExpenseList
-          expenses={this.state.expenses}
-          onSelect={this.handleExpenseSelect}
-        />
-        <button
-          onClick={() => this.onExpenseNew()}
-          className="mdc-fab app-fab--absolute material-icons"
-          aria-label="Add expense"
-        >
-          <span className="mdc-fab__icon">add</span>
-        </button>
-      </div>
-    );
-}
 
 // =================== Google auth/api clients ===================
 
