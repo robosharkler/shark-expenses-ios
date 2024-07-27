@@ -20,22 +20,19 @@ class App extends Component {
 
     this.clientId =
       "624739709049-hsbpgrimevikffkbaeeclqneflib7b7o.apps.googleusercontent.com";
-    this.spreadsheetId =
-      process.env.REACT_APP_SHEET_ID ||
-      "199goDfe-uggNp1LfZpIQc48t4uLu04nFvQzLgPWjPM4";
+    this.spreadsheetId = "199goDfe-uggNp1LfZpIQc48t4uLu04nFvQzLgPWjPM4";
 
     this.state = {
-      signedIn: undefined,
+      signedIn: false,
       accounts: [],
       categories: [],
       expenses: [],
-      processing: true,
+      processing: undefined,
       expense: {},
       currentMonth: undefined,
       previousMonth: undefined,
       showExpenseForm: false
     };
-
   }
 
   componentDidMount() {
@@ -194,7 +191,7 @@ class App extends Component {
         this.snackbar.show({
           message: `Expense ${this.state.expense.id ? "updated" : "added"}!`
         });
-        this.load();
+        this.loadGSheet();
       },
       response => {
         console.error("Something went wrong");
@@ -234,7 +231,7 @@ class App extends Component {
       .then(
         response => {
           this.snackbar.show({ message: "Expense deleted!" });
-          this.load();
+          this.loadGSheet();
         },
         response => {
           console.error("Something went wrong");
@@ -270,7 +267,7 @@ class App extends Component {
     });
   }
 
-  load() {
+  loadGSheet() {
     window.gapi.client.sheets.spreadsheets.values
       .batchGet({
         spreadsheetId: this.spreadsheetId,
@@ -344,11 +341,19 @@ class App extends Component {
     }
   }
 
+  initializeGapiClient = () => {
+    window.gapi.client.init({
+      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+    }).then(() => {
+      this.checkSignInStatus();
+    }).catch(err => console.error('Error initializing Google API client:', err));
+  }
+
   handleCredentialResponse = (response) => {
     if (response && response.access_token) {
       window.gapi.client.setToken({access_token: response.access_token});
       this.setState({ signedIn: true });
-      this.load();
+      this.loadGSheet();
     }
   }
 
@@ -356,7 +361,7 @@ class App extends Component {
     const token = window.gapi.client.getToken();
     if (token && token.access_token) {
       this.setState({ signedIn: true });
-      this.load();
+      this.loadGSheet();
     } else {
       this.setState({ signedIn: false });
     }
@@ -374,14 +379,6 @@ class App extends Component {
         this.setState({ signedIn: false });
       });
     }
-  }
-
-  initializeGapiClient = () => {
-    window.gapi.client.init({
-      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-    }).then(() => {
-      this.checkSignInStatus();
-    }).catch(err => console.error('Error initializing Google API client:', err));
   }
 }
 
