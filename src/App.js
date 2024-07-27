@@ -40,7 +40,6 @@ class App extends Component {
 
   componentDidMount() {
     this.loadGisClient();
-    this.loadGapiClient();
     document.addEventListener("keyup", this.onKeyPressed.bind(this));
   }
 
@@ -195,7 +194,7 @@ class App extends Component {
         this.snackbar.show({
           message: `Expense ${this.state.expense.id ? "updated" : "added"}!`
         });
-        this.loadFromGSheet();
+        this.load();
       },
       response => {
         console.error("Something went wrong");
@@ -235,7 +234,7 @@ class App extends Component {
       .then(
         response => {
           this.snackbar.show({ message: "Expense deleted!" });
-          this.loadFromGSheet();
+          this.load();
         },
         response => {
           console.error("Something went wrong");
@@ -271,7 +270,7 @@ class App extends Component {
     });
   }
 
-  loadFromGSheet() {
+  load() {
     window.gapi.client.sheets.spreadsheets.values
       .batchGet({
         spreadsheetId: this.spreadsheetId,
@@ -312,6 +311,7 @@ class App extends Component {
     gisScript.src = "https://accounts.google.com/gsi/client";
     gisScript.async = true;
     gisScript.defer = true;
+    gisScript.onload = this.loadGapiClient;
     document.body.appendChild(gisScript);
   }
 
@@ -344,19 +344,11 @@ class App extends Component {
     }
   }
 
-  initializeGapiClient = () => {
-    window.gapi.client.init({
-      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-    }).then(() => {
-      this.checkSignInStatus();
-    }).catch(err => console.error('Error initializing Google API client:', err));
-  }
-
   handleCredentialResponse = (response) => {
     if (response && response.access_token) {
       window.gapi.client.setToken({access_token: response.access_token});
       this.setState({ signedIn: true });
-      this.loadFromGSheet();
+      this.load();
     }
   }
 
@@ -364,7 +356,7 @@ class App extends Component {
     const token = window.gapi.client.getToken();
     if (token && token.access_token) {
       this.setState({ signedIn: true });
-      this.loadFromGSheet();
+      this.load();
     } else {
       this.setState({ signedIn: false });
     }
@@ -382,6 +374,14 @@ class App extends Component {
         this.setState({ signedIn: false });
       });
     }
+  }
+
+  initializeGapiClient = () => {
+    window.gapi.client.init({
+      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+    }).then(() => {
+      this.checkSignInStatus();
+    }).catch(err => console.error('Error initializing Google API client:', err));
   }
 }
 
